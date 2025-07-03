@@ -3,5 +3,4 @@ location               = "westeurope"
 resource_group_name    = "rg-euw-trainingsandbox"
 vm_size                = "Standard_B2s"
 allowed_ssh_cidr       = "193.182.18.41/32"
-
 ssh_public_key_path    = "/Users/ivanberezii/.ssh/id_rsa_azure.pub"
