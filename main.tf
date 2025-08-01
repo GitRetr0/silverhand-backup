@@ -8,13 +8,13 @@ terraform {
 }
 
 provider "azurerm" {
-  subscription_id            = var.subscription_id
+  subscription_id = var.subscription_id
   features {}
   skip_provider_registration = true
 }
 
 data "azurerm_resource_group" "rg" {
-  name     = var.resource_group_name
+  name = var.resource_group_name
 }
 
 resource "azurerm_virtual_network" "vnet" {
@@ -35,17 +35,23 @@ resource "azurerm_network_security_group" "nsg" {
   name                = "silverhand-vm-nsg"
   location            = var.location
   resource_group_name = data.azurerm_resource_group.rg.name
+}
 
-    security_rule {
-    name                       = "allow-ssh-training-ipv4"
-    priority                   = 320
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_address_prefix      = "193.182.18.41/32"
-    destination_port_range     = "22"
-    source_port_range          = "*"
-    destination_address_prefix = "*"
+resource "azurerm_network_security_rule" "ssh_rule" {
+  name                        = "allow-ssh-training-ipv4"
+  priority                    = 320
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_address_prefix       = var.allowed_ssh_cidr
+  destination_port_range      = "22"
+  source_port_range           = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = data.azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
+
+  lifecycle {
+    ignore_changes = [source_address_prefix]
   }
 }
 
@@ -60,7 +66,7 @@ resource "azurerm_public_ip" "pip" {
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
-  zones              = ["1"]
+  zones               = ["1"]
   // depends_on = [
   //  azurerm_network_interface.nic
   //]
@@ -99,12 +105,12 @@ resource "azurerm_virtual_machine_data_disk_attachment" "data" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                   = "silverhand-vm"
-  resource_group_name    = data.azurerm_resource_group.rg.name
-  location               = data.azurerm_resource_group.rg.location
-  size                   = var.vm_size
-  admin_username         = "iberezii"
-  network_interface_ids  = [azurerm_network_interface.nic.id]
+  name                  = "silverhand-vm"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  location              = data.azurerm_resource_group.rg.location
+  size                  = var.vm_size
+  admin_username        = "iberezii"
+  network_interface_ids = [azurerm_network_interface.nic.id]
   zone                  = "1"
 
   source_image_reference {
